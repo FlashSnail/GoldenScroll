@@ -10,6 +10,488 @@
 #include <set>
 #include <map>
 using namespace std;
+//===========================================================
+/*52、约瑟夫问题是一个著名的趣题。这里我们稍稍修改一下规则。有n个人站成一列。
+并从头到尾给他们编号，第一个人编号为1。然后从头开始报数，第一轮依次报1，2，1，2...然后报到2的人出局。
+接着第二轮再从上一轮最后一个报数的人开始依次报1，2，3，1，2，3...报到2，3的人出局。以此类推直到剩下以后一个人。
+现在需要求的即是这个人的编号。给定一个int n，代表游戏的人数。请返回最后一个人的编号
+测试样例：
+5
+返回：5*/
+class Joseph {
+public:
+	int kickOut(vector<int> line, int space) {
+		if (line.size() == 1) {
+			return line[0];
+		}
+		vector<int> nextRound;
+		int index = 0;
+		while (index < line.size()) {
+			nextRound.push_back(line[index]);
+			index += (space + 1);
+		}
+		nextRound.insert(nextRound.begin(), nextRound.back());
+		nextRound.erase(nextRound.end() - 1);
+		return kickOut(nextRound, ++space);
+	}
+	int getResult(int n) {
+		vector<int> line;
+		for (int i = 0; i < n; i++) {
+			line.push_back(i + 1);
+		}
+		return kickOut(line, 1);
+	}
+};
+
+//===========================================================
+/*51、约瑟夫问题是一个非常著名的趣题，即由n个人坐成一圈，按顺时针由1开始给他们编号。
+然后由第一个人开始报数，数到m的人出局。现在需要求的是最后一个出局的人的编号。
+给定两个int n和m，代表游戏的人数。请返回最后一个出局的人的编号。保证n和m小于等于1000。
+测试样例：
+5 3
+返回：4*/
+class Joseph {
+public:
+	int getResult(int n, int m) {
+		if (n < 2) {
+			return n;
+		}
+		vector<int> in;
+		in.resize(n);
+		for (int i = 0; i < n; i++) {
+			in[i] = i + 1;
+		}
+		vector<int>::iterator i;
+		int index = 0;
+		while (in.size() != 1) {
+			index = (index + m - 1) % in.size();
+			i = in.begin() + index;
+			in.erase(i);			
+		}	
+		return in[0];
+	}
+};
+//===========================================================
+/*50、有一堆箱子，每个箱子宽为wi，长为di，高为hi，现在需要将箱子都堆起来，而且为了使堆起来的箱子不到，
+上面的箱子的宽度和长度必须小于下面的箱子。请实现一个方法，求出能堆出的最高的高度，这里的高度即堆起来的所有箱子的高度之和。
+给定三个int数组w,l,h，分别表示每个箱子宽、长和高，同时给定箱子的数目n。请返回能堆成的最高的高度。保证n小于等于500。
+测试样例：
+[1,1,1],[1,1,1],[1,1,1]
+返回：1*/
+class Box {
+public:
+	int getHeight(vector<int> w, vector<int> l, vector<int> h, int n) {
+		if (n == 0) return n;
+		if (n == 1) return h[0];
+		for (int i = 0; i < n; i++) {
+			for (int j = n - 1; j > i; --j) {
+				if (w[j] > w[j - 1]) {
+					swap(w[j], w[j - 1]);
+					swap(l[j], l[j - 1]);
+					swap(h[j], h[j - 1]);
+				}
+			}
+		}
+		int *maxHigh = new int[n + 1]();
+		maxHigh[0] = h[0];
+		int ans = maxHigh[0];
+		for (int i = 1; i < n; i++) {
+			maxHigh[i] = h[i];
+			int previousMaxHigh = 0;
+			for (int j = i - 1; j >= 0; j--) {
+				if (w[i] < w[j] && l[i] < l[j]) {
+					previousMaxHigh = max(previousMaxHigh, maxHigh[j]);
+				}
+			}
+			maxHigh[i] += previousMaxHigh;
+			ans = max(ans, maxHigh[i]);
+		}
+		return ans;
+	}
+};
+
+//===========================================================
+/*49、请设计一种算法，解决著名的n皇后问题。这里的n皇后问题指在一个nxn的棋盘上放置n个棋子，
+使得每行每列和每条对角线上都只有一个棋子，求其摆放的方法数。给定一个int n，请返回方法数，保证n小于等于15
+测试样例：
+1
+返回：1*/
+class Queens {
+public:
+	int nQueens(int n) {
+		int ans = 0;
+		vector<int> chessBorad(n + 1);
+		count(chessBorad, 1, n, ans);
+		return ans;
+	}
+	void count(vector<int> &chessBorad, int row, int n, int &ans) {
+		if (row > n) {
+			ans++;
+			return;
+		}
+		for (int col = 1; col <= n; col++) {
+			chessBorad[row] = col;	//row是行，判断(row,chessBorad[row](== col))位置可否放旗子
+			if (place(chessBorad, row)) {	//如果可以放置，就进行下一行的放置，不能就将row行棋子放到下一列
+				count(chessBorad, row + 1, n, ans);
+			}
+		}
+	}
+	bool place(vector<int> &chessBorad, int currentRow) {
+		for (int previousRow = 1; previousRow < currentRow; previousRow++) {	//枚举已放置的前previousRow行，看这一行能否放置
+			if (chessBorad[previousRow] == chessBorad[currentRow] || //同一列
+				chessBorad[previousRow] - chessBorad[currentRow] == previousRow - currentRow ||	//右对角线
+				chessBorad[previousRow] - chessBorad[currentRow] == currentRow - previousRow) {	//左对角线
+				return false;	//如果在同一列，右对角线，左对角线则不能放置
+			}
+		}
+		return true;
+	}
+};
+
+//===========================================================
+/*48、有数量不限的硬币，币值为25分、10分、5分和1分，请编写代码计算n分有几种表示法。
+给定一个int n，请返回n分有几种表示法。保证n小于等于100000，为了防止溢出，请将答案Mod 1000000007。
+测试样例：
+6
+返回：2*/
+class Coins {
+public:
+	int countWays(int n) {
+		int *dp = new int[n + 1]();
+		dp[0] = 1;
+		int coin[4] = { 1, 5, 10, 25 };
+		for (int i = 0; i < 4; i++) {
+			for (int j = coin[i]; j <= n; j++) {
+				dp[j] = (dp[j] + dp[j - coin[i]]) % 1000000007;	//按面值间隔累加
+			}
+		}
+		return dp[n];
+	}
+};
+//===========================================================
+/*47、在一个nxm矩阵形状的城市里爆发了洪水，洪水从(0,0)的格子流到这个城市，在这个矩阵中有的格子有一些建筑，
+洪水只能在没有建筑的格子流动。请返回洪水流到(n - 1,m - 1)
+的最早时间(洪水只能从一个格子流到其相邻的格子且洪水单位时间能从一个格子流到相邻格子)。
+给定一个矩阵map表示城市，其中map[i][j]表示坐标为(i,j)的格子，值为1代表该格子有建筑，
+0代表没有建筑。同时给定矩阵的大小n和m(n和m均小于等于100)，请返回流到(n - 1,m - 1)的最早时间。保证洪水一定能流到终点。*/
+class Flood {
+public:
+	/*struct position {
+		int row, col;
+	};
+	int MyfloodFill(vector<vector<int>> map, int n, int m) {
+		position offset[4];
+		//为了最短路径，采取右下左上的顺序寻找路径
+		offset[0].row = 0;	offset[0].col = 1;
+		offset[1].row = 1;	offset[1].col = 0;
+		offset[2].row = 0;	offset[2].col = -1;
+		offset[3].row = -1;	offset[3].col = 0;
+		//为了不对map边缘特殊处理，在外围加上不可到的围墙
+		vector<vector<int>> maze;
+		maze.resize(n + 2);
+		for (int i = 0; i < n + 2; i++) {
+			maze[i].resize(m + 2, 1);
+		}
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < m; j++) {
+				maze[i + 1][j + 1] = map[i][j];
+			}
+		}
+		//初始化各项
+		int pattern = 0;
+		int lastPattern = 3;
+		position here;	here.row = 1;	here.col = 1;
+		maze[1][1] = 1;
+		stack<position> path;
+		//找路径
+		while (here.row != n || here.col != m) {
+			//还没到出口，找下一步
+			int r, c;
+			while (pattern <= lastPattern) {
+				r = here.row + offset[pattern].row;
+				c = here.col + offset[pattern].col;
+				if (maze[r][c] == 0) {
+					break;
+				}
+				pattern++;
+			}
+			if (pattern <= lastPattern) {
+				//找到了一个可以走的方式
+				maze[r][c] = maze[here.row][here.col] + 1;
+				path.push(here);
+				here.row = r;
+				here.col = c;
+				//	maze[r][c] = 1;
+				pattern = 0;
+			}
+			else {
+				//无路可走了，回溯一步
+				position previous = path.top();
+				path.pop();
+				if (previous.row == here.row) {
+					pattern = 2 + previous.col - here.col;
+				}
+				else {
+					pattern = 3 + previous.row - here.row;
+				}
+				here = previous;
+			}
+		}
+		return maze[n][m] - 1;
+	}*/
+	//感觉是一样的啊，但是自己的算法步数比下面的多10
+	int floodFill(vector<vector<int> > map, int n, int m) {
+		// write code here
+		if (n == 0 || m == 0 || map[0][0]) return 0;
+		queue<int> qRecord;
+		int direction[4][2] = { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 } };
+		int x, y, next_x, next_y;
+		int point;
+		int k;
+		qRecord.push(0);
+		while (!qRecord.empty()) {
+			point = qRecord.front();
+			qRecord.pop();
+			x = point / m;
+			y = point%m;
+			if ((x + 1) == n && (y + 1) == m) {
+				return map[n - 1][m - 1];
+			}
+			for (k = 0; k<4; k++) {
+				next_x = x + direction[k][0];
+				next_y = y + direction[k][1];
+				if (next_x >= 0 && next_x<n && next_y >= 0 && next_y<m && map[next_x][next_y] == 0) {
+					qRecord.push(next_x*m + next_y);
+					map[next_x][next_y] = map[x][y] + 1;
+				}
+			}
+		}
+	}
+};
+
+//===========================================================
+/*46、对于一个字符串，请设计一个算法，判断其是否为一个合法的括号串。
+给定一个字符串A和它的长度n，请返回一个bool值代表它是否为一个合法的括号串。
+测试样例：
+"(()())",6
+返回：true
+测试样例：
+"()a()()",7
+返回：false
+测试样例：
+"()(()()",7
+返回：false*/
+class Parenthesis {
+public:
+	bool chkParenthesis(string A, int n) {
+		if (A.length() <= 1) {
+			return false;
+		}
+		stack<char> s;
+		for (int i = 0; i < A.length(); i++) {
+			if (A[i] != '(' && A[i] != ')') return false;
+			if (A[i] == '(') {
+				s.push('(');
+			}
+			if (A[i] == ')') {
+				if (s.empty()) return false;
+				s.pop();
+			}
+		}
+		if (s.empty()) return true;
+		return false;
+	}
+};
+//===========================================================
+/*45、编写一个方法，确定某字符串的所有排列组合。
+给定一个string A和一个int n,代表字符串和其长度，请返回所有该字符串字符的排列，
+保证字符串长度小于等于11且字符串中字符均为大写英文字符，排列中的字符串按字典序从大到小排序。(不合并重复字符串)
+测试样例：
+"ABC"
+返回：["CBA","CAB","BCA","BAC","ACB","ABC"]*/
+class Permutation {
+public:
+	vector<string> ans;
+	void perm(string &A, int begin, int end) {
+		if (begin == end) {
+			ans.push_back(A);
+		}
+		for (int i = begin; i <= end; i++) {
+			swap(A[i], A[begin]);
+			perm(A, begin + 1, end);
+			swap(A[i], A[begin]);
+		}
+	}
+	vector<string> getPermutation(string A) {
+		return	ans;
+	}
+};
+
+//===========================================================
+/*44、请编写一个方法，返回某集合的所有非空子集。
+给定一个int数组A和数组的大小int n，请返回A的所有非空子集。保证A的元素个数小于等于20，
+且元素互异。各子集内部从大到小排序,子集之间字典逆序排序，见样例。
+测试样例：
+[123,456,789]
+返回：{[789,456,123],[789,456],[789,123],[789],[456 123],[456],[123]}*/
+class Subset {
+public:
+	vector<vector<int>> getSubsets(vector<int> A, int n) {
+		vector<vector<int>> ans;
+		if (n == 1) {
+			ans.push_back(A);
+			return ans;
+		}
+		vector<int> B(A.begin(), A.end() - 1);
+		vector<vector<int>> previous = getSubsets(B, n - 1);
+		vector<int> temp;
+		for (auto i : previous) {
+			temp = i;
+			temp.insert(temp.begin(), A[n - 1]);
+			ans.push_back(temp);
+		}
+		temp.clear(); temp.push_back(A[n - 1]);
+		ans.push_back(temp);
+		for (auto i : previous) {
+			ans.push_back(i);
+		}
+		return ans;
+	}
+};
+
+//===========================================================
+/*43、在数组A[0..n-1]中，有所谓的魔术索引，满足条件A[i]=i。给定一个不下降序列，元素值可能相同，
+编写一个方法，判断在数组A中是否存在魔术索引。请思考一种复杂度优于o(n)的方法。
+给定一个int数组A和int n代表数组大小，请返回一个bool，代表是否存在魔术索引。
+测试样例：
+[1,1,3,4,5]
+返回：true*/
+
+class MagicIndex {
+public:
+	bool findMagicIndex(vector<int> A, int n) {
+		//二分法同样适用
+		if (n / 2 == 0 && A[0] != 0) {
+			return false;
+		}
+		if (A[n / 2] == n / 2) {
+			return true;
+		}
+		else if (A[n / 2] > n / 2) {
+			vector<int> leftA(A.begin(), A.begin() + n / 2);
+			return findMagicIndex(leftA, n / 2);
+		}
+		else if (A[n / 2] < n / 2) {
+			vector<int> rightA(A.begin(), A.begin() + n / 2);
+			return findMagicIndex(rightA, n / 2);
+		}
+		return false;
+	}
+};
+
+//===========================================================
+/*42、在数组A[0..n-1]中，有所谓的魔术索引，满足条件A[i]=i。给定一个升序数组，元素值各不相同，
+编写一个方法，判断在数组A中是否存在魔术索引。请思考一种复杂度优于o(n)的方法。
+给定一个int数组A和int n代表数组大小，请返回一个bool，代表是否存在魔术索引。
+测试样例：
+[1,2,3,4,5]
+返回：false*/
+class MagicIndex {
+public:
+	bool findMagicIndex(vector<int> A, int n) {
+		if (n/2 == 0 && A[0] != 0) {
+			return false;
+		}
+		if (A[n/2] == n/2) {
+			return true;
+		}
+		else if (A[n/2] > n/2) {
+			vector<int> leftA(A.begin(), A.begin() + n / 2);
+			return findMagicIndex(leftA, n / 2);
+		}
+		else if (A[n/2] < n/2) {
+			vector<int> rightA(A.begin(), A.begin() + n / 2);
+			return findMagicIndex(rightA, n / 2);
+		}
+		return false;
+	}
+};
+
+//===========================================================
+/*41、有一个XxY的网格，一个机器人只能走格点且只能向右或向下走，要从左上角走到右下角。
+请设计一个算法，计算机器人有多少种走法。注意这次的网格中有些障碍点是不能走的。
+给定一个int[][] map(C++ 中为vector >),表示网格图，若map[i][j]为1则说明该点不是障碍点，否则则为障碍。
+另外给定int x,int y，表示网格的大小。请返回机器人从(0,0)走到(x - 1,y - 1)的走法数，为了防止溢出，
+请将结果Mod 1000000007。保证x和y均小于等于50*/
+class Robot {
+public:
+	int countWays(vector<vector<int>> map, int x, int y) {
+		vector<vector<int>> dp(x, vector<int>(y, 0));
+		for (int i = 0; i < x; i++){
+			for (int j = 0; j < y; j++){
+				if (map[i][j] != 1) continue;
+				if (i == 0 && j == 0) dp[0][0] = 1;
+				else if (i != 0 && j == 0) dp[i][0] = dp[i - 1][0];
+				else if (i == 0 && j != 0) dp[0][j] = dp[0][j - 1];
+				else{
+					dp[i][j] = (dp[i][j - 1] + dp[i - 1][j]) % 1000000007;
+				}
+			}
+		}
+		return dp[x - 1][y - 1];
+	}
+};
+
+
+//===========================================================
+/*40、有一个XxY的网格，一个机器人只能走格点且只能向右或向下走，要从左上角走到右下角。
+请设计一个算法，计算机器人有多少种走法。
+给定两个正整数int x,int y，请返回机器人的走法数目。保证x＋y小于等于12。
+测试样例：
+2,2
+返回：2*/
+class Robot {
+public:
+	int countWays(int x, int y) {
+		if (x == 1 || y == 1)
+		{
+			return 1;
+		}
+		if (x == 2 && y == 2)
+		{
+			return 2;
+		}
+		return countWays(x - 1, y) + countWays(x, y - 1);
+	}
+};
+
+//===========================================================
+/*39、有个小孩正在上楼梯，楼梯有n阶台阶，小孩一次可以上1阶、2阶、3阶。请实现一个方法，
+计算小孩有多少种上楼的方式。为了防止溢出，请将结果Mod 1000000007
+给定一个正整数int n，请返回一个数，代表上楼的方式数。保证n小于等于100000。
+测试样例：
+1
+返回：1*/
+class GoUpstairs {
+public:
+	int countWays(int n) {
+		long long f[100001] = { 0 };
+		f[1] = 1;	f[2] = 2; f[3] = 4;
+		if (n <= 3)
+		{
+			return f[n];
+		}
+		int index = 3;
+		while (index != n)
+		{
+			index++;
+			f[index] = f[index - 1] + f[index - 2] + f[index - 3];
+			if (f[index] >= 1000000007)
+				f[index] %= 1000000007;
+		}
+		return f[n];
+	}
+};
 
 //===========================================================
 /*38、有一些数的素因子只有3、5、7，请设计一个算法，找出其中的第k个数。
@@ -19,6 +501,26 @@ using namespace std;
 返回：7*/
 class KthNumber {
 public:
+	int minEle(queue<int> &q3, queue<int> &q5, queue<int> &q7){
+		int minElement = min(q3.front(), q5.front());
+		minElement = min(minElement, q7.front());
+		if (minElement == q3.front()){
+			q3.push(minElement * 3);
+			q5.push(minElement * 5);
+			q7.push(minElement * 7);
+			q3.pop();
+		}
+		else if (minElement == q5.front()){
+			q5.push(minElement * 5);
+			q7.push(minElement * 7);
+			q5.pop();
+		}
+		else if (minElement == q7.front()){
+			q7.push(minElement * 7);
+			q7.pop();
+		}
+		return minElement;
+	}
 	int findKth(int k) {
 		switch (k)
 		{
@@ -33,33 +535,16 @@ public:
 		default:
 			break;
 		}
-		queue<int> q;
-		q.push(3);
-		q.push(5);
-		q.push(7);
-		int temp;
-		int num = 3;
-		vector<int> v{ 3, 5, 7 };
-		while (num < k)
+		queue<int> q3, q5, q7;
+		q3.push(3);
+		q5.push(5);
+		q7.push(7);
+		vector<int> ans{ 1 };
+		while (ans.size() != k + 1)
 		{
-			temp = q.front();
-			for (auto i : v)
-			{
-				temp *= i;
-				q.push(temp);
-				num++;
-				if (num == k)
-				{
-					break;
-				}
-			}
-			if (num == k)
-			{
-				break;
-			}
-			q.pop();
+			ans.push_back(minEle(q3, q5, q7));
 		}
-		return q.back();
+		return ans[k];
 	}
 };
 
