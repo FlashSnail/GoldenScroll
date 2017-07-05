@@ -11,6 +11,185 @@
 #include <map>
 using namespace std;
 //===========================================================
+/*57、叠罗汉是一个著名的游戏，游戏中一个人要站在另一个人的肩膀上。同时我们应该让下面的人比上面的人更高一点。
+已知参加游戏的每个人的身高，请编写代码计算通过选择参与游戏的人，我们多能叠多少个人。
+注意这里的人都是先后到的，意味着参加游戏的人的先后顺序与原序列中的顺序应该一致。
+给定一个int数组men，代表依次来的每个人的身高。同时给定总人数n，请返回最多能叠的人数。保证n小于等于500。
+测试样例：
+[1,6,2,5,3,4],6
+返回：4*/
+class Stack {
+public:
+	int getHeight(vector<int> men, int n) {
+		vector<int> ans(n, 1);
+		int maxHigh = 1;
+		for (int i = 1; i < n; i++) {
+			for (int j = 0; j < i; j++) {
+				if (men[j] < men[i]) {
+					ans[i] = max(ans[i], ans[j] + 1);
+				}
+			}
+			maxHigh = max(maxHigh, ans[i]);
+		}
+		return maxHigh;
+	}
+};
+
+//===========================================================
+/*56、有一个NxM的整数矩阵，矩阵的行和列都是从小到大有序的。请设计一个高效的查找算法，查找矩阵中元素x的位置。
+给定一个int有序矩阵mat，同时给定矩阵的大小n和m以及需要查找的元素x，请返回一个二元数组，代表该元素的行号和列号(均从零开始)。保证元素互异。
+测试样例：
+[[1,2,3],[4,5,6]],2,3,6
+返回：[1,2]*/
+class Finder {
+public:
+	vector<int> findElement(vector<vector<int> > mat, int n, int m, int x) {
+		int row = 0, col = m - 1;
+		while (row < n && col >= 0 && mat[row][col] != x) {
+			if (mat[row][col] < x) {
+				row++;
+			}
+			else {
+				col--;
+			}
+		}
+		vector<int> ans;
+		if (row < n && col >= 0) {
+			ans.push_back(row); ans.push_back(col);
+			return ans;
+		}
+		else {
+			ans.push_back(-1); ans.push_back(-1);
+			return ans;
+		}
+	}
+};
+
+//===========================================================
+/*55、有一个排过序的字符串数组，但是其中有插入了一些空字符串，请设计一个算法，找出给定字符串的位置。算法的查找部分的复杂度应该为log级别。
+给定一个string数组str,同时给定数组大小n和需要查找的string x，请返回该串的位置(位置从零开始)。
+测试样例：
+["a","b","","c","","d"],6,"c"
+返回：3*/
+class Finder {
+public:
+	string minString(string A, string B) {
+		int len = min(A.length(), B.length());
+		int index = 0;
+		while (index < len && A[index] == B[index]) {
+			index++;
+		}
+		if (index == len) {
+			return (index == A.length()) ? A : B;
+		}
+		else {
+			return (A[index] > B[index]) ? B : A;
+		}
+	}
+	int findIndex(vector<string> A, int start, int end, string x) {
+		if (end - start == 1) {
+			return (A[start] == x) ? start : end;
+		}
+		start += (A[start] == "") ? 1 : 0;
+		end -= (A[end] == "") ? 1 : 0;
+		//排过序的数组肯定有东西，不过这里还是加一个判断吧
+		if (start >= A.size() || end < 0 || ((start == end) && (A[start] != x))) {
+			return -1;
+		}
+		int mid = start + (end - start) / 2;
+		mid += (A[mid] == "") ? 1 : 0;
+		if (A[mid] == x) {
+			return mid;
+		}
+		else if (A[mid] == minString(x, A[mid])) {
+			return findIndex(A, mid, end, x);
+		}
+		else if (x == minString(x, A[mid])) {
+			return findIndex(A, start, mid, x);
+		}
+		return -1;
+	}
+	int findString(vector<string> str, int n, string x) {
+		return findIndex(str, 0, n - 1, x);
+	}
+};
+
+//===========================================================
+/*54、有一个排过序的数组，包含n个整数，但是这个数组向左进行了一定长度的移位，例如，原数组为[1,2,3,4,5,6]，
+向左移位5个位置即变成了[6,1,2,3,4,5],现在对于移位后的数组，需要查找某个元素的位置。请设计一个复杂度为log级别的算法完成这个任务。
+给定一个int数组A，为移位后的数组，同时给定数组大小n和需要查找的元素的值x，请返回x的位置(位置从零开始)。保证数组中元素互异。
+测试样例：
+[6,1,2,3,4,5],6,6
+返回：0*/
+class Finder {
+public:
+	int findLast(vector<int> A, int start, int end) {
+		if (end - start <= 1) {
+			return (A[start] > A[end]) ? start : end;
+		}
+		int mid = start + (end - start) / 2;
+		if (A[start]  > A[mid]) {
+			return findLast(A, start, start + (end - start) / 2);
+		}
+		else {
+			return findLast(A, mid, end);
+		}
+	}
+	int find(vector<int> A, int start, int end, int x) {
+		if (end - start <= 1) {
+			return (A[start] == x) ? start : end;
+		}
+		int mid = start + (end - start) / 2;
+		if (x == A[mid]) {
+			return mid;
+		}
+		else if (x > A[mid]) {
+			return find(A, mid, end, x);
+		}
+		else {
+			return find(A, start, mid, x);
+		}
+	}
+	int findElement(vector<int> A, int n, int x) {
+		int last = findLast(A, 0, n - 1);
+		if (x > A[n - 1]) {
+			return find(A, 0, last, x);
+		}
+		else {
+			return find(A, last, n - 1, x);
+		}
+		/*数组不一定是连续的
+		int offset = A[0] - 1;
+		return (x - 1) - (offset % n);*/
+	}
+};
+
+//===========================================================
+/*53、请编写一个方法，对一个字符串数组进行排序，将所有变位词合并，保留其字典序最小的一个串。
+这里的变位词指变换其字母顺序所构成的新的词或短语。例如"triangle"和"integral"就是变位词。
+给定一个string的数组str和数组大小int n，请返回排序合并后的数组。保证字符串串长小于等于20，数组大小小于等于300。
+测试样例：
+["ab","ba","abc","cba"]
+返回：["ab","abc"]*/
+class SortString {
+public:
+	vector<string> sortStrings(vector<string> str, int n) {
+		//描述的不是很清楚，返回的是原str，而不是变位词
+		set<string> ans;
+		sort(str.begin(), str.end());
+		vector<string> result;
+		for (int i = 0; i < n; i++) {
+			string temp = str[i];
+			sort(temp.begin(), temp.end());
+			if (ans.count(temp) == 0) {
+				ans.insert(temp);
+				result.push_back(str[i]);
+			}
+		}
+		return result;
+	}
+};
+//===========================================================
 /*52、约瑟夫问题是一个著名的趣题。这里我们稍稍修改一下规则。有n个人站成一列。
 并从头到尾给他们编号，第一个人编号为1。然后从头开始报数，第一轮依次报1，2，1，2...然后报到2的人出局。
 接着第二轮再从上一轮最后一个报数的人开始依次报1，2，3，1，2，3...报到2，3的人出局。以此类推直到剩下以后一个人。
