@@ -10,6 +10,839 @@
 #include <set>
 #include <map>
 using namespace std;
+//==============================================================
+/*83、有一个单词清单，请设计一个高效算法，计算由清单中单词组成的最大子矩阵，要求矩阵中的行和列都是清单中的单词。
+给定一个string数组dic，代表单词清单，同时给定清单的大小n，请返回最大子矩阵的面积。
+保证单词清单的大小小于等于50，且某一长度的串的数量小于等于12。
+测试样例：
+["aaa","aaa","aaa","bb","bb"]
+返回：9*/
+class AlphaMatrix {
+public:
+	int findAlphaMatrix(vector<string> dic, int n) {
+		// 我只能说，什么玩意。。。题意描述的是这种东西么？不应该是填词那种数独么？想破了头也想不到是这么个东西啊
+		map<string, int> m;
+		int maxArea = 0, temp = 0;
+		for (int i = 0; i < n; i++) {
+			m[dic[i]]++;
+			temp = dic[i].length() * m[dic[i]];
+			maxArea = max(maxArea, temp);
+		}
+		return maxArea;
+	}
+};
+//==============================================================
+/*82、有一个正整数和负整数组成的NxN矩阵，请编写代码找出元素总和最大的子矩阵。请尝试使用一个高效算法。
+给定一个int矩阵mat和矩阵的阶数n，请返回元素总和最大的子矩阵的元素之和。保证元素绝对值小于等于100000，且矩阵阶数小于等于200。
+测试样例：
+[[1,2,-3],[3,4,-5],[-5,-6,-7]],3
+返回：10*/
+class SubMatrix {
+public:
+	int sumOfSubMatrix(vector<vector<int> > mat, int n) {
+		int maxsum = 0, submax = 0;
+		for (int startRow = 0; startRow < n; startRow++) {
+			vector<int> v(n, 0);
+			for (int i = startRow; i < n; i++) {
+				submax = 0;
+				for (int j = 0; j < n; j++) {
+					v[j] += mat[i][j];
+					submax = max(v[j], v[j] + submax);
+					maxsum = max(maxsum, submax);
+				}
+			}
+		}
+		return maxsum;
+	}
+};
+//==============================================================
+/*81、有一个方阵，其中每个单元(像素)非黑即白(非0即1)，请设计一个高效算法，找到四条边颜色相同的最大子方阵。
+给定一个01方阵mat，同时给定方阵的边长n，请返回最大子方阵的边长。保证方阵边长小于等于100。
+测试样例：
+[[1,1,1],[1,0,1],[1,1,1]],3
+返回：3*/
+class SubMatrix {
+public:
+	int maxSubMatrix(vector<vector<int> > mat, int n) {
+		vector<int> ones(n, 1);
+		vector<vector<int>> left(n, ones);	//当前点左边连续相同的点个数(算自己)
+		vector<vector<int>> above(n, ones);	//当前点上边连续相同的点个数（算自己）
+		initail(mat, n, left, above);
+		int maxLength = 1;
+		for (int i = 1; i < n; i++) {
+			for (int j = 1; j < n; j++) {
+				if (mat[i][j] != mat[i][j - 1] || mat[i][j] != mat[i - 1][j]) {
+					if (mat[i][j] != mat[i][j - 1] && mat[i][j] != mat[i - 1][j]) {
+						left[i][j] = above[i][j] = 1;
+					}
+					else if (mat[i][j] != mat[i][j - 1]) {
+						left[i][j] = 1;
+						above[i][j] = above[i - 1][j] + 1;
+					}
+					else if (mat[i][j] != mat[i - 1][j]) {
+						above[i][j] = 1;
+						left[i][j] = left[i][j - 1] + 1;
+					}
+				}
+				else {
+					left[i][j] = left[i][j - 1] + 1;
+					above[i][j] = above[i - 1][j] + 1;
+					int minLength = min(left[i][j - 1], above[i - 1][j]);//由于是方阵，长宽要一致，因此取二者最小的那个
+					for (int length = minLength; length > 0 && length >= maxLength; length--) {	//在最小中找最大
+						if (left[i - length][j] >= minLength + 1 && above[i][j - length] >= minLength + 1) {//考察对边的长度
+							maxLength = max(maxLength, length + 1);
+						}
+					}
+				}
+			}
+		}
+		return maxLength;
+	}
+	void initail(vector<vector<int>> mat, int n, vector<vector<int>> &left, vector<vector<int>> &above) {
+		for (int i = 1; i < n; i++) {
+			if (mat[0][i] == mat[0][i - 1]) {
+				left[0][i] = left[0][i - 1] + 1;
+			}
+			if (mat[i][0] == mat[i - 1][0]) {
+				above[i][0] = above[i - 1][0] + 1;
+			}
+		}
+	}
+};
+//==============================================================
+/*80、现有一个字典，同时给定字典中的两个字符串s和t，给定一个变换，每次可以改变字符串中的任意一个字符，请设计一个算法，
+计算由s变换到t所需的最少步数，同时需要满足在变换过程中的每个串都是字典中的串。
+给定一个string数组dic，同时给定数组大小n，串s和串t，请返回由s到t变换所需的最少步数。
+若无法变换到t则返回-1。保证字符串长度均小于等于10，且字典中字符串数量小于等于500。
+测试样例：
+["abc","adc","bdc","aaa”],4,”abc","bdc"
+返回：2*/
+class Change {
+public:
+	bool path(string a, string b) {
+		int lenA = a.length(), lenB = b.length();
+		if (lenA != lenB) {
+			return false;
+		}
+		int flag = 0;
+		for (int i = 0; i < lenA; i++) {
+			if (a[i] != b[i]) {
+				if (flag == 0) {
+					flag++;
+				}
+				else {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	int countChanges(vector<string> dic, int n, string s, string t) {
+		int map[500][500];	//题中明确说了不超过500个，so
+		int index_s, index_t;
+		for (int i = 0; i < n; i++) {
+			if (dic[i] == s) {
+				index_s = i;
+			}
+			if (dic[i] == t) {
+				index_t = i;
+			}
+			for (int j = i; j < n; j++) {
+				if (i == j) map[i][j] = 0;
+				else if (path(dic[i], dic[j])) {
+					map[i][j] = map[j][i] = 1;
+				}
+				else {
+					map[i][j] = map[j][i] = 500;	//只有500个元素，最大距离不过500
+				}
+			}
+		}
+		for (int k = 0; k < n; k++) {
+			for (int i = 0; i < n; i++) {
+				for (int j = 0; j < n; j++) {
+					if (map[i][k] + map[k][j] < map[i][j]) {
+						map[i][j] = map[i][k] + map[k][j];
+					}
+				}
+			}
+		}
+		return (map[index_s][index_t] == 500) ? -1 : map[index_s][index_t];
+	}
+};
+
+//==============================================================
+/*79、现有一些随机生成的数字要将其依次传入，请设计一个高效算法，对于每次传入一个数字后，
+算出当前所有传入数字的中位数。(若传入了偶数个数字则令中位数为第n/2小的数字，n为已传入数字个数)。
+给定一个int数组A，为传入的数字序列，同时给定序列大小n，请返回一个int数组，代表每次传入后的中位数。保证n小于等于1000。
+测试样例：
+[1,2,3,4,5,6],6
+返回：[1,1,2,2,3,3]*/
+class Middle {
+public:
+	vector<int> getMiddle(vector<int> A, int n) {
+		priority_queue<int, vector<int>, less<int>> small;
+		priority_queue<int, vector<int>, greater<int>> big;
+		vector<int> ans;
+
+		for (int i = 0; i < A.size(); ++i) {
+			if (small.empty() || A[i] <= small.top())
+				small.push(A[i]);
+			else
+				big.push(A[i]);
+			if (small.size() == big.size() + 2) {
+				big.push(small.top());
+				small.pop();
+			}
+			else if (small.size() == big.size() - 1) {
+				small.push(big.top());
+				big.pop();
+			}
+			ans.push_back(small.top());
+		}
+		return ans;
+	}
+};
+//==============================================================
+/*78、现有一个小写英文字母组成的字符串s和一个包含较短小写英文字符串的数组p，请设计一个高效算法，
+对于p中的每一个较短字符串，判断其是否为s的子串。给定一个string数组p和它的大小n，
+同时给定string s，为母串，请返回一个bool数组，每个元素代表p中的对应字符串是否为s的子串。
+保证p中的串长度小于等于8，且p中的串的个数小于等于500，同时保证s的长度小于等于1000。
+测试样例：
+["a","b","c","d"],4,"abc"
+返回：[true,true,true,false]*/
+class Substr {
+public:
+	vector<bool> chkSubStr(vector<string> p, int n, string s) {
+		//先无耻的使用find了，后续研究trie树
+		vector<bool> ans;
+		for (int i = 0; i < n; i++) {
+			if (s.find(p[i]) != string::npos) ans.push_back(true);
+			else ans.push_back(false);
+		}
+		return ans;
+	}
+};
+//==============================================================
+/*77、有一组单词，请编写一个程序，在数组中找出由数组中字符串组成的最长的串A，即A是由其它单词组成的(可重复)最长的单词。
+给定一个string数组str，同时给定数组的大小n。请返回最长单词的长度，保证题意所述的最长单词存在。
+测试样例：
+["a","b","c","ab","bc","abc"],6
+返回：3*/
+class LongestString {
+public:
+	bool cmp(string a, string b) {
+		return a.length() > b.length();
+	}
+	int getLongest(vector<string> str, int n) {
+		sort(str.begin(), str.end(), cmp);
+		for (int i = 0; i < n; i++) {
+			if (longest(str,str[i],i,n)) {
+				return str[i].length();
+			}
+		}
+		return 0;
+	}
+	bool longest(vector<string> str, string a, int begin, int end) {
+		if (a.length() == 0) {
+			return true;
+		}
+		for (int i = begin + 1; i < end; i++) {
+			if (a.find(str[i]) == 0) {
+				if (longest(str, a.substr(str[i].length()), begin, end)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+};
+
+//==============================================================
+/*76、有一篇文章内含多个单词，现给定两个单词，请设计一个高效算法，找出文中这两个单词的最短距离
+(即最少相隔的单词数,也就是两个单词在文章中位置的差的绝对值)。
+给定一个string数组article，代表所给文章，同时给定文章的单词数n和待查找的两个单词x和y。
+请返回两个单词的最短距离。保证两个单词均在文中出现且不相同，同时保证文章单词数小于等于1000。*/
+class Distance {
+public:
+	int getDistance(vector<string> article, int n, string x, string y) {
+		int i_x = -1, i_y = -1;
+		int ans = n;
+		for (int i = 0; i < n; i++) {
+			if (article[i] == x) {
+				i_x = i;
+			}
+			if (article[i] == y) {
+				i_y = i;
+			}
+			if (i_x != -1 && i_y != -1) {
+				ans = min(ans, abs(i_x - i_y));
+			}
+		}
+		return ans;
+	}
+};
+
+//==============================================================
+/*75、现在有一个数组，请找出数组中每个元素的后面比它大的最小的元素，若不存在则为-1。
+给定一个int数组A及数组的大小n，请返回每个元素所求的值组成的数组。保证A中元素为正整数，且n小于等于1000。
+测试样例：
+[11,13,10,5,12,21,3],7
+[12,21,12,12,21,-1,-1]*/
+class NextElement {
+public:
+	vector<int> findNext(vector<int> A, int n) {
+		// 上一题理解错了，就做成了这道题的要求
+		vector<int> ans;
+		if (n <= 1) {
+			ans.push_back(-1);
+			return ans;
+		}		
+		for (int i = 0; i < n - 1; i++) {
+			stack<int> s;
+			for (int j = i + 1; j < n; j++) {
+				if (s.empty()) {
+					if (A[j] > A[i]) {
+						s.push(A[j]);
+					}
+				}
+				else {
+					if (A[j] > A[i] && A[j] < s.top()) {
+						s.push(A[j]);
+					}
+				}
+			}
+			int temp = (s.empty()) ? -1 : s.top();
+			ans.push_back(temp);
+		}
+		ans.push_back(-1);
+		return ans;
+	}
+};
+//==============================================================
+/*74、现在我们有一个int数组，请你找出数组中每个元素的下一个比它大的元素。
+给定一个int数组A及数组的大小n，请返回一个int数组，代表每个元素比他大的下一个元素,若不存在则为-1。保证数组中元素均为正整数。
+测试样例：
+[11,13,10,5,12,21,3],7
+返回：[13,21,12,12,21,-1,-1]*/
+class NextElement {
+public:
+	vector<int> findNext(vector<int> A, int n) {
+		vector<int> ans;
+		if (n <= 1) {
+			ans.push_back(-1);
+			return ans;
+		}		
+		queue<int> q;		
+		for (int i = 0; i < n - 1; i++) {
+			bool flag = true;
+			for (int j = i + 1; j < n; j++) {
+				if (A[j] > A[i]) {
+					q.push(A[j]);
+					flag = false;
+					break;
+				}
+			}
+			if (flag) {
+				q.push(-1);
+			}
+		}
+		while (!q.empty()) {
+			ans.push_back(q.front());
+			q.pop();
+		}
+		ans.push_back(-1);
+		return ans;
+		/*这个理解错题意了，不过实现了找出A中元素之后比他大的最小元素，代码就留着吧
+		vector<int> ans;
+		if (n <= 1) {
+			ans.push_back(-1);
+			return ans;
+		}		
+		for (int i = 0; i < n - 1; i++) {
+			stack<int> s;
+			for (int j = i + 1; j < n; j++) {
+				if (s.empty()) {
+					if (A[j] > A[i]) {
+						s.push(A[j]);
+					}
+				}
+				else {
+					if (A[j] > A[i] && A[j] < s.top()) {
+						s.push(A[j]);
+					}
+				}
+			}
+			int temp = (s.empty()) ? -1 : s.top();
+			ans.push_back(temp);
+		}
+		ans.push_back(-1);
+		return ans;*/
+	}
+};
+//==============================================================
+/*73、请编写一个方法，输出0到n(包括n)中数字2出现了几次。
+给定一个正整数n，请返回0到n的数字中2出现了几次。
+测试样例：
+10
+返回：1*/
+class Count2 {
+public:
+	int countNumberOf2s(int n) {
+		int ans = 0;
+		for (int i = 1; i <= n; i *= 10) {
+			int high = n / i;
+			int low = n % i;
+			ans += ((high + 7) / 10) * i + (high % i == 2) * (low - 1);
+		}
+		return ans;
+	}
+};
+//==============================================================
+/*72、请编写一个函数，将两个数字相加。不得使用+或其他算数运算符。
+给定两个int A和B。请返回A＋B的值
+测试样例：
+1,2
+返回：3*/
+class UnusualAdd {
+public:
+	int addAB(int A, int B) {
+		if (B == 0) {
+			return A;
+		}
+		return addAB(A^B, (A^B) << 1);
+	}
+};
+
+//==============================================================
+/*71、有一个类似结点的数据结构TreeNode，包含了val属性和指向其它结点的指针。其可以用来表示二叉查找树
+(其中left指针表示左儿子，right指针表示右儿子)。请编写一个方法，将二叉查找树转换为一个链表，
+其中二叉查找树的数据结构用TreeNode实现，链表的数据结构用ListNode实现。
+给定二叉查找树的根结点指针root，请返回转换成的链表的头指针。*/
+struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+    TreeNode(int x) :
+            val(x), left(NULL), right(NULL) {
+    }
+};
+struct ListNode {
+    int val;
+    struct ListNode *next;
+    ListNode(int x) : val(x), next(NULL) {}
+};
+class Converter {
+public:
+	ListNode* head = new ListNode(0);
+	ListNode* currentNode = head;
+    ListNode* treeToList(TreeNode* root) {
+		if (root != NULL) {
+			treeToList(root->left);
+			currentNode->next = new ListNode(root->val);
+			currentNode = currentNode->next;
+			treeToList(root->right);
+		}
+		return head->next;
+    }
+};
+
+//==============================================================
+/*70、请设计一个高效算法，找出数组中两数之和为指定值的所有整数对。
+给定一个int数组A和数组大小n以及需查找的和sum，请返回和为sum的整数对的个数。保证数组大小小于等于3000。
+测试样例：
+[1,2,3,4,5],5,6
+返回：2*/
+/*FindPair C;
+	vector<int> c = { 11,7,7,6,14,2,14,15,2,1,2,12,13,9,8,15,13,8,10,11,14,10,2,9,4,9,3,7,6,10,15,4,7,6,15,3,9,13,5,2,6,10,10,1,12,4,3,3,8,8,1,4,7,11,13,5,13,15,4,3,1,11,6,11,9,9,11,15,12,10,13,3,11,4,8,9,7,3,13,9,11,3,2,11,10,1,4,2,3,3,14,11,5,10,1,14,8,1,11,3,1,9,14,6,1,7,15,10,14,6,4,12,11 };
+	cout << C.countPairs(c, 113, 16) << endl;*/
+class FindPair {
+public:
+	int countPairs(vector<int> A, int n, int sum) {
+		int size = A.size();
+		if (size == 0 || n <= 0) {
+			return 0;
+		}//if
+		// 排序
+		sort(A.begin(), A.end());
+		//
+		int count = 0;
+		for (int i = 0, j = n - 1; i < j;) {
+			int s = A[i] + A[j];
+			if (s == sum) {
+				// 3 3 3这种情况
+				if (A[i] == A[j]) {
+					int x = j - i + 1;
+					count += x*(x - 1) / 2;
+					break;
+				}//if
+				// 2 2 3 4 4 4这种情况
+				else {
+					int k = i + 1;
+					while (k <= j && A[i] == A[k]) {
+						++k;
+					}//while
+					int k2 = j - 1;
+					while (k2 >= i && A[j] == A[k2]) {
+						--k2;
+					}//while
+					count += (k - i)*(j - k2);
+					i = k;
+					j = k2;
+				}//else
+			}//if
+			else if (s < sum) {
+				++i;
+			}//else
+			else {
+				--j;
+			}//else
+		}//for
+		return count;
+        /*这里会出现一个问题，没办法处理负数，因此这个方法不行
+        int *hash = new int[100000]();
+        int ans = 0;
+        for (int i = 0; i < n; i++) {
+            hash[A[i]]++;
+        }
+        for (int i = 0; i < n; i++) {
+            if (A[i] == sum) {
+                ans += hash[A[i]];
+                hash[A[i]] = 0;
+            }
+            else if (A[i] == sum / 2) {
+                ans += hash[A[i]] * (hash[A[i]] - 1) / 2;
+                hash[A[i]] = 0;
+            }
+            else if (hash[sum - A[i]] != 0) {
+                int a = hash[A[i]], b = hash[sum - A[i]];
+                ans += a*b;
+                hash[A[i]] = 0;
+                hash[sum - A[i]] = 0;
+            }
+        }
+        return ans;*/
+	}
+};
+//==============================================================
+/*69、请设计一个高效的方法，找出任意指定单词在一篇文章中的出现频数。
+给定一个string数组article和数组大小n及一个待统计单词word，请返回该单词在文章中的出现频数。保证文章的词数小于等于1000。*/
+class Frequency {
+public:
+	int getFrequency(vector<string> article, int n, string word) {
+		map<string, int> m;
+		for (int i = 0; i < n; i++) {
+			m[article[i]]++;
+		}
+		return m[word];
+	}
+};
+//==============================================================
+/*68、对于一个有正有负的整数数组，请找出总和最大的连续数列。
+给定一个int数组A和数组大小n，请返回最大的连续数列的和。保证n的大小小于等于3000。
+测试样例：
+[1,2,3,-6,1]
+返回：6*/
+class MaxSum {
+public:
+	int getMaxSum(vector<int> A, int n) {
+		if (n == 1) return A[0];
+		int sum;
+		int ans = 0;
+		for (int i = 0; i < A.size() - 1; i++) {
+			sum = A[i];
+			ans = max(ans, sum);
+			for (int j = i + 1; j < A.size(); j++) {
+				sum += A[j];
+				ans = max(ans, sum);
+			}
+		}
+		return ans;
+	}
+};
+//==============================================================
+/*67、有一个非负整数，请编写一个算法，打印该整数的英文描述。
+给定一个int x，请返回一个string，为该整数的英文描述。
+测试样例：
+1234
+返回："One Thousand,Two Hundred Thirty Four"*/
+class ToString {
+public:
+	string belowTen[10] = { "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine" };
+	string belowTwenty[10] = { "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen" };
+	string belowHundred[10] = { "", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety" };
+	string toString(int x) {
+		if (x == 0) return "Zero";
+		return helper(x);
+	}
+	string helper(int num) {
+		string result = "";
+		if (num < 10) result = belowTen[num];
+		else if (num < 20) result = belowTwenty[num - 10];
+		else if (num < 100) result = belowHundred[num / 10] + " " + helper(num % 10);
+		else if (num < 1000) result = helper(num / 100) + " Hundred " + helper(num % 100);
+		else if (num < 1000000) result = helper(num / 1000) + " Thousand" + (num % 1000 > 0 ? "," : " ") + helper(num % 1000);
+		else if (num < 1000000000) result = helper(num / 1000000) + " Million" + (num % 1000000 > 0 ? "," : " ") + helper(num % 1000000);
+		else result = helper(num / 1000000000) + " Billion " + helper(num % 1000000000);
+		return Trim(result);
+	}
+	string Trim(string &str) {
+		int i, len;
+
+		//先去除左边的空格
+		len = str.length();
+		for (i = 0; i<len; i++) {
+			if (str[i] != ' ') break;
+		}
+		str = str.substr(i, len - i + 1);
+
+		//再去除右边的空格
+		len = str.length();
+		for (i = len - 1; i >= 0; i--) {
+			if (str[i] != ' ') break;
+		}
+		str = str.substr(0, i + 1);
+
+		return str;
+	}
+};
+//===========================================================
+/*66、有一个整数数组，请编写一个函数，找出索引m和n，只要将m和n之间的元素排好序，整个数组就是有序的。
+注意：n-m应该越小越好，也就是说，找出符合条件的最短序列。
+给定一个int数组A和数组的大小n，请返回一个二元组，代表所求序列的起点和终点。
+(原序列位置从0开始标号,若原序列有序，返回[0,0])。保证A中元素均为正整数。
+测试样例：
+[1,4,6,5,9,10],6
+返回：[2,3]*/
+class Rearrange {
+public:		
+	vector<int> findSegment(vector<int> A, int n) {
+		int start = 0, end = n - 1;
+		vector<int> B = A;
+		sort(A.begin(), A.end());
+		bool flag = true;
+		for (int i = 0; i < n; i++) {
+			if (A[i] != B[i]) {
+				if (flag) {
+					start = i;
+					flag = false;
+				}
+				else end = i;
+			}
+		}
+		if (start == 0 && end == n - 1) {
+			start = 0; end = 0;
+		}
+		vector<int> ans = { start, end };
+		return ans;
+	}
+};
+//===========================================================
+/*65、请设计一个算法，计算n的阶乘有多少个尾随零。
+给定一个int n，请返回n的阶乘的尾零个数。保证n为正整数。
+测试样例：
+5
+返回：1*/
+class Factor {
+public:
+	int getFactorSuffixZero(int n) {
+		//2*5就能得到1个零，就计算总共能分解出几个5即可
+		int ans = 0;
+		for (int i = 1; i <= n; i++) {
+			int ele = i;
+			if (ele % 5 == 0) {
+				ans++;
+				ele /= 5;
+			}
+		}
+		return ans;
+	}
+};
+//===========================================================
+/*64、我们现在有四个槽，每个槽放一个球，颜色可能是红色(R)、黄色(Y)、绿色(G)或蓝色(B)。例如，
+可能的情况为RGGB(槽1为红色，槽2、3为绿色，槽4为蓝色)，作为玩家，你需要试图猜出颜色的组合。比如，
+你可能猜YRGB。要是你猜对了某个槽的颜色，则算一次“猜中”。要是只是猜对了颜色但槽位猜错了，则算一次“伪猜中”。注意，“猜中”不能算入“伪猜中”。
+给定两个string A和guess。分别表示颜色组合，和一个猜测。请返回一个int数组，第一个元素为猜中的次数，第二个元素为伪猜中的次数。
+测试样例：
+"RGBY","GGRR"
+返回：[1,1]*/
+class Result {
+public:
+	vector<int> calcResult(string A, string guess) {
+		int real = 0, fake = 0;
+		map<char, int> m;
+		for (int i = 0; i < A.length(); i++) {
+			if (A[i] == guess[i]) {
+				real++;
+			}
+			m[A[i]]++;
+		}
+		for (int i = 0; i < guess.length(); i++) {
+			if (m[guess[i]] != 0) {
+				fake++;
+				m[guess[i]]--;
+			}
+		}
+		vector<int> ans = { real, fake - real };
+		return ans;
+	}
+};
+//===========================================================
+/*63、请编写一个方法，找出两个数字中最大的那个。条件是不得使用if-else等比较和判断运算符。
+给定两个int a和b，请返回较大的一个数。若两数相同则返回任意一个。
+测试样例：
+1，2
+返回：2*/
+class Max {
+public:
+	int getMax(int a, int b) {
+		b = a - b;
+		a -= b&(b >> 31);
+		return a;
+	}
+};
+//===========================================================
+/*62、对于一个给定的井字棋棋盘，请设计一个高效算法判断当前玩家是否获胜。
+给定一个二维数组board，代表当前棋盘，其中元素为1的代表是当前玩家的棋子，为0表示没有棋子，为-1代表是对方玩家的棋子。
+测试样例：
+[[1,0,1],[1,-1,-1],[1,-1,0]]
+返回：true*/
+class Board {
+public:
+	bool checkWon(vector<vector<int> > board) {
+		if (board[0][0] + board[1][1] + board[2][2] == 3) return true;
+		if (board[0][2] + board[1][1] + board[2][0] == 3) return true;
+		for (int i = 0; i<3; i++) {
+			if (board[i][0] + board[i][1] + board[i][2] == 3) return true;
+			if (board[0][i] + board[1][i] + board[2][i] == 3) return true;
+		}
+		return false;
+	}
+};
+//===========================================================
+/*61、请编写一个函数，函数内不使用任何临时变量，直接交换两个数的值。
+给定一个int数组AB，其第零个元素和第一个元素为待交换的值，请返回交换后的数组。
+测试样例：
+[1,2]
+返回：[2,1]*/
+class Exchange {
+public:
+	vector<int> exchangeAB(vector<int> AB) {
+		AB[0] = AB[0] ^ AB[1];
+		AB[1] = AB[0] ^ AB[1];
+		AB[0] = AB[0] ^ AB[1];
+		return AB;
+	}
+};
+//===========================================================
+/*60、有一组数，对于其中任意两个数组，若前面一个大于后面一个数字，则这两个数字组成一个逆序对。请设计一个高效的算法，计算给定数组中的逆序对个数。
+给定一个int数组A和它的大小n，请返回A中的逆序对个数。保证n小于等于5000。
+测试样例：
+[1,2,3,4,5,6,7,0],8
+返回：7*/
+class AntiOrder {
+public:
+	int ans = 0;
+	void countNum(vector<int> &A, int start, int end, vector<int> &temp) {
+		if (end - start == 1) {
+			if (A[start] > A[end]) {
+				ans++;
+				swap(A[start], A[end]);
+			}
+			return;
+		}
+		else if (start == end) {
+			return;
+		}
+		else {
+			int mid = start + (end - start) / 2;
+			countNum(A, start, mid, temp);
+			countNum(A, mid + 1, end, temp);
+			merge(A, start, end, temp);
+			for (int i = start; i <= end; i++) {
+				A[i] = temp[i];
+			}
+		}
+	}
+	void merge(vector<int> &A, int start, int end, vector<int> &temp) {
+		int mid = start + (end - start) / 2;
+		int leftIndex = start;
+		int rightIndex = mid + 1;
+		int index = start;
+		while (leftIndex <= mid && rightIndex <= end) {
+			if (A[leftIndex] > A[rightIndex]) {
+				temp[index] = A[rightIndex];
+				index++; rightIndex++;
+				ans += mid - leftIndex + 1;
+			}
+			else {
+				temp[index++] = A[leftIndex++];
+			}
+		}
+		while (leftIndex <= mid) {
+			temp[index++] = A[leftIndex++];
+		}
+		while (rightIndex <= end) {
+			temp[index++] = A[rightIndex++];
+		}
+	}
+	int count(vector<int> A, int n) {
+		vector<int> temp(n,0);
+		countNum(A, 0, n - 1, temp);
+		return ans;
+	}
+};
+//===========================================================
+/*59、现在我们要读入一串数，同时要求在读入每个数的时候算出它的秩，即在当前数组中小于等于
+它的数的个数(不包括它自身)，请设计一个高效的数据结构和算法来实现这个功能。
+给定一个int数组A，同时给定它的大小n，请返回一个int数组，元素为每次加入的数的秩。保证数组大小小于等于5000。
+测试样例：
+[1,2,3,4,5,6,7],7
+返回：[0,1,2,3,4,5,6]*/
+class Rank {
+public:
+	vector<int> getRankOfNumber(vector<int> A, int n) {
+		vector<int> rank(n,0);
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < i; j++) {
+				if (A[i] >= A[j]) {
+					rank[i]++;
+				}
+			}
+		}
+		return rank;
+	}
+};
+
+//===========================================================
+/*58、叠罗汉是一个著名的游戏，游戏中一个人要站在另一个人的肩膀上。为了使叠成的罗汉更稳固，我们应该让上面的人比下面的人更轻一点。
+现在一个马戏团要表演这个节目，为了视觉效果，我们还要求下面的人的身高比上面的人高。请编写一个算法，计算最多能叠多少人，注意这里所有演员都同时出现。
+给定一个二维int的数组actors，每个元素有两个值，分别代表一个演员的身高和体重。同时给定演员总数n，请返回最多能叠的人数。保证总人数小于等于500。
+测试样例：
+[[1,2],[3,4],[5,6],[7,8]],4
+返回：4*/
+class Stack {
+public:
+	int getHeight(vector<vector<int> > actors, int n) {
+		for (int i = 0; i < n; i++) {
+			for (int j = n - 1; j > i; j--) {
+				if (actors[j][0] > actors[j - 1][0]) {
+					swap(actors[j], actors[j - 1]);
+				}
+			}
+		}
+		vector<int> sum(n, 1);
+		int ans = 1;
+		for (int i = 1; i < n; i++) {
+			for (int j = i - 1; j >= 0; j--) {
+				if (actors[i][0] < actors[j][0] && actors[i][1] < actors[j][1]) {
+					sum[i] = max(sum[i], sum[j] + 1);
+				}
+			}
+			ans = max(ans, sum[i]);
+		}
+		return ans;
+	}
+};
 //===========================================================
 /*57、叠罗汉是一个著名的游戏，游戏中一个人要站在另一个人的肩膀上。同时我们应该让下面的人比上面的人更高一点。
 已知参加游戏的每个人的身高，请编写代码计算通过选择参与游戏的人，我们多能叠多少个人。
